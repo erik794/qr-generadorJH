@@ -1,0 +1,637 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Generador de Códigos QR</title>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/qrcodejs/1.0.0/qrcode.min.js"></script>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
+    <style>
+        :root {
+            --bg-primary: #0a0a0a;
+            --bg-secondary: #1a1a2e;
+            --accent: #16213e;
+            --text-primary: #ffffff;
+            --text-secondary: #b8b8b8;
+            --neon: #00d4ff;
+            --neon-alt: #ff00ff;
+        }
+
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, Cantarell, sans-serif;
+            background: linear-gradient(135deg, var(--bg-primary) 0%, var(--bg-secondary) 50%, var(--accent) 100%);
+            min-height: 100vh;
+            color: var(--text-primary);
+            overflow-x: hidden;
+            line-height: 1.5;
+            -webkit-font-smoothing: antialiased;
+            -moz-osx-font-smoothing: grayscale;
+        }
+
+        /* Partículas */
+        .particles {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            pointer-events: none;
+            z-index: 1;
+        }
+
+        .particle {
+            position: absolute;
+            border-radius: 50%;
+            animation: float 8s ease-in-out infinite;
+        }
+
+        @keyframes float {
+            0%, 100% { transform: translateY(0px) rotate(0deg); opacity: 0.6; }
+            50% { transform: translateY(-120px) rotate(180deg); opacity: 1; }
+        }
+
+        /* Header PERFECTO */
+        .header {
+            background: rgba(10, 10, 10, 0.95);
+            backdrop-filter: blur(25px);
+            padding: 12px 0;
+            position: sticky;
+            top: 0;
+            z-index: 100;
+            border-bottom: 1px solid rgba(0, 212, 255, 0.15);
+            box-shadow: 0 2px 20px rgba(0, 0, 0, 0.3);
+        }
+
+        .header-content {
+            max-width: 1400px;
+            margin: 0 auto;
+            padding: 0 16px;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+        }
+
+        .logo-container {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+        }
+
+        .logo-placeholder {
+            width: 44px;
+            height: 44px;
+            background: linear-gradient(135deg, var(--neon), var(--neon-alt));
+            border-radius: 12px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 18px;
+            font-weight: 700;
+            color: #000;
+            box-shadow: 0 0 20px rgba(0, 212, 255, 0.4);
+            flex-shrink: 0;
+        }
+
+        .logo-text {
+            font-size: clamp(1.1em, 4vw, 1.4em);
+            font-weight: 700;
+            background: linear-gradient(135deg, var(--neon), var(--neon-alt));
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
+        }
+
+        /* Contenedor PRINCIPAL */
+        .main-container {
+            max-width: 1400px;
+            margin: 0 auto;
+            padding: 20px 16px;
+            min-height: calc(100vh - 80px);
+            display: flex;
+            flex-direction: column;
+            gap: 24px;
+            z-index: 2;
+            position: relative;
+        }
+
+        /* Título */
+        .title {
+            text-align: center;
+            font-size: clamp(1.8em, 5vw, 2.8em);
+            font-weight: 800;
+            margin-bottom: 0;
+            background: linear-gradient(135deg, var(--neon), var(--neon-alt));
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
+        }
+
+        /* Cards */
+        .card {
+            background: rgba(26, 26, 46, 0.85);
+            backdrop-filter: blur(20px);
+            border: 1px solid rgba(0, 212, 255, 0.15);
+            border-radius: 20px;
+            padding: clamp(20px, 4vw, 32px);
+            box-shadow: 0 20px 40px rgba(0, 0, 0, 0.3);
+            transition: all 0.3s ease;
+        }
+
+        .card:hover {
+            border-color: rgba(0, 212, 255, 0.3);
+            box-shadow: 0 25px 50px rgba(0, 0, 0, 0.4);
+        }
+
+        /* Form Group */
+        .form-group {
+            margin-bottom: 24px;
+        }
+
+        .form-group label {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            margin-bottom: 12px;
+            color: var(--text-secondary);
+            font-weight: 600;
+            font-size: 0.95em;
+        }
+
+        .form-input {
+            width: 100%;
+            padding: 16px;
+            background: rgba(255, 255, 255, 0.05);
+            border: 2px solid rgba(0, 212, 255, 0.2);
+            border-radius: 12px;
+            color: var(--text-primary);
+            font-size: 16px;
+            transition: all 0.3s ease;
+        }
+
+        .form-input:focus {
+            outline: none;
+            border-color: var(--neon);
+            box-shadow: 0 0 0 3px rgba(0, 212, 255, 0.1);
+            background: rgba(255, 255, 255, 0.08);
+        }
+
+        .form-input::placeholder {
+            color: rgba(184, 184, 184, 0.6);
+        }
+
+        /* Color Panel */
+        .color-panel {
+            background: rgba(26, 26, 46, 0.6);
+            border: 1px solid rgba(255, 0, 255, 0.15);
+            border-radius: 16px;
+            padding: 20px;
+            margin-bottom: 24px;
+        }
+
+        .color-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(44px, 1fr));
+            gap: 12px;
+            margin-top: 16px;
+        }
+
+        .color-option {
+            aspect-ratio: 1;
+            border-radius: 12px;
+            cursor: pointer;
+            border: 3px solid transparent;
+            transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.3);
+            position: relative;
+        }
+
+        .color-option.active {
+            border-color: var(--neon);
+            box-shadow: 0 0 0 3px rgba(0, 212, 255, 0.3), 0 0 20px rgba(0, 212, 255, 0.4);
+            transform: scale(1.05);
+        }
+
+        /* Button */
+        .btn-primary {
+            width: 100%;
+            padding: 18px;
+            background: linear-gradient(135deg, var(--neon), var(--neon-alt));
+            color: #000;
+            border: none;
+            border-radius: 12px;
+            font-size: clamp(1em, 3vw, 1.1em);
+            font-weight: 700;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 12px;
+            box-shadow: 0 10px 25px rgba(0, 212, 255, 0.2);
+        }
+
+        .btn-primary:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 15px 35px rgba(0, 212, 255, 0.3);
+        }
+
+        /* QR Container */
+        .qr-container {
+            text-align: center;
+        }
+
+        .qr-title {
+            margin-bottom: 24px;
+            color: var(--text-secondary);
+            font-size: 1.2em;
+            font-weight: 600;
+        }
+
+        #qr-code {
+            margin: 0 auto 24px;
+            padding: 24px;
+            background: rgba(255, 255, 255, 0.02);
+            border-radius: 20px;
+            border: 2px solid rgba(0, 212, 255, 0.2);
+            display: none;
+            box-shadow: 0 20px 40px rgba(0, 0, 0, 0.4);
+            max-width: 100%;
+            overflow: hidden;
+        }
+
+        .logo-preview {
+            width: 64px;
+            height: 64px;
+            object-fit: contain;
+            margin: 12px auto;
+            border-radius: 12px;
+            display: none;
+            border: 2px solid rgba(0, 212, 255, 0.4);
+            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.3);
+        }
+
+        /* Download Buttons */
+        .download-buttons {
+            display: none;
+            gap: 12px;
+            flex-wrap: wrap;
+        }
+
+        .btn-download {
+            flex: 1;
+            min-width: 140px;
+            padding: 14px 16px;
+            border: none;
+            border-radius: 12px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 8px;
+            font-size: 0.95em;
+            min-height: 52px;
+        }
+
+        .btn-download.primary {
+            background: linear-gradient(135deg, #00ff88, #00d4ff);
+            color: #000;
+        }
+
+        .btn-download.secondary {
+            background: linear-gradient(135deg, #ff6b6b, #ff1493);
+            color: #fff;
+        }
+
+        .btn-download:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 10px 25px rgba(0, 0, 0, 0.3);
+        }
+
+        /* RESPONSIVE PERFECTION */
+        @media (min-width: 1024px) {
+            .main-container {
+                flex-direction: row;
+                padding: 32px 24px;
+                gap: 32px;
+            }
+            
+            .left-panel {
+                flex: 1;
+                max-width: 500px;
+            }
+            
+            .right-panel {
+                flex: 1;
+            }
+        }
+
+        @media (max-width: 1023px) {
+            .color-grid {
+                grid-template-columns: repeat(4, 1fr);
+                gap: 10px;
+            }
+        }
+
+        @media (max-width: 768px) {
+            .main-container {
+                padding: 16px;
+                gap: 20px;
+            }
+            
+            .color-grid {
+                grid-template-columns: repeat(3, 1fr);
+                gap: 10px;
+            }
+            
+            .download-buttons {
+                flex-direction: column;
+            }
+            
+            .btn-download {
+                min-width: 100%;
+            }
+        }
+
+        @media (max-width: 480px) {
+            .main-container {
+                padding: 12px;
+                gap: 16px;
+            }
+            
+            .card {
+                padding: 20px;
+            }
+            
+            .color-grid {
+                grid-template-columns: repeat(3, 1fr);
+                gap: 8px;
+            }
+            
+            .color-option {
+                min-width: 40px;
+                min-height: 40px;
+            }
+        }
+
+        @media (max-width: 360px) {
+            .color-grid {
+                grid-template-columns: repeat(2, 1fr);
+            }
+        }
+
+        /* Animations */
+        @keyframes fadeInUp {
+            from { opacity: 0; transform: translateY(30px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+
+        .card {
+            animation: fadeInUp 0.6s ease-out;
+        }
+
+        .left-panel { animation-delay: 0.1s; }
+        .right-panel { animation-delay: 0.2s; }
+
+        /* Loading */
+        .loading {
+            display: inline-block;
+            width: 20px;
+            height: 20px;
+            border: 3px solid rgba(0, 212, 255, 0.3);
+            border-radius: 50%;
+            border-top-color: var(--neon);
+            animation: spin 1s ease-in-out infinite;
+        }
+
+        @keyframes spin {
+            to { transform: rotate(360deg); }
+        }
+    </style>
+</head>
+<body>
+    <!-- Particles -->
+    <div class="particles">
+        <div class="particle" style="left: 10%; animation-duration: 7s; top: 20%; width: 4px; height: 4px; background: #00d4ff;"></div>
+        <div class="particle" style="left: 20%; animation-duration: 9s; top: 80%; width: 6px; height: 6px; background: #ff00ff;"></div>
+        <div class="particle" style="left: 80%; animation-duration: 8s; top: 30%; width: 3px; height: 3px; background: #00ff88;"></div>
+        <div class="particle" style="left: 90%; animation-duration: 10s; top: 60%; width: 5px; height: 5px; background: #ff6b6b;"></div>
+    </div>
+
+    <!-- Header -->
+    <header class="header">
+        <div class="header-content">
+            <div class="logo-container">
+                <!-- AQUÍ COLOCA TU LOGO -->
+                <img src="img/logo.png" alt="Tu Logo" style="width: 70px; height: 70px; border-radius: 20px;">
+          
+              
+            </div>
+        </div>
+    </header>
+
+    <div class="main-container">
+        <!-- Left Panel -->
+        <div class="left-panel card">
+            <h1 class="title">Generador QR</h1>
+            
+            <div class="form-group">
+                <label><i class="fas fa-link"></i> URL</label>
+                <input type="url" class="form-input" id="url-input" placeholder="https://ejemplo.com" value="https://ingresaTuURL.com">
+            </div>
+
+            <div class="form-group">
+                <label><i class="fas fa-image"></i> Logo (Opcional)</label>
+                <input type="file" class="form-input" id="logo-input" accept="image/*">
+                <img id="logo-preview" class="logo-preview" alt="Logo preview">
+            </div>
+
+            <div class="color-panel">
+                <label><i class="fas fa-palette"></i> Colores</label>
+                <div class="color-grid">
+                    <div class="color-option active" data-color="#000000" style="background: #000000;" title="Negro"></div>
+                    <div class="color-option" data-color="#1a1a1a" style="background: #1a1a1a;" title="Gris Oscuro"></div>
+                    <div class="color-option" data-color="#333333" style="background: #333333;" title="Gris"></div>
+                    <div class="color-option" data-color="#0066cc" style="background: #0066cc;" title="Azul"></div>
+                    <div class="color-option" data-color="#cc0000" style="background: #cc0000;" title="Rojo"></div>
+                    <div class="color-option" data-color="#008000" style="background: #008000;" title="Verde"></div>
+                    <div class="color-option" data-color="#9932cc" style="background: #9932cc;" title="Púrpura"></div>
+                    <div class="color-option" data-color="#ff6600" style="background: #ff6600;" title="Naranja"></div>
+                    <div class="color-option" data-color="#ffcc00" style="background: #ffcc00;" title="Amarillo"></div>
+                    <div class="color-option" data-color="#800080" style="background: #800080;" title="Morado"></div>
+                    <div class="color-option" data-color="#ff1493" style="background: #ff1493;" title="Rosa"></div>
+                    <div class="color-option" data-color="#228b22" style="background: #228b22;" title="Verde Bosque"></div>
+                </div>
+            </div>
+
+            <button class="btn-primary" onclick="generateQR()">
+                <i class="fas fa-qrcode"></i> 
+                <span id="btn-text">Generar QR </span>
+                <span id="btn-loading" class="loading" style="display: none;"></span>
+            </button>
+        </div>
+
+        <!-- Right Panel -->
+        <div class="right-panel card">
+            <div class="qr-container">
+                <h2 class="qr-title">Tu Código QR</h2>
+                <div id="qr-code"></div>
+                <div class="download-buttons">
+                    <button class="btn-download primary" onclick="downloadQR('png')">
+                        <i class="fas fa-download"></i> PNG
+                    </button>
+                    <button class="btn-download secondary" onclick="downloadQR('svg')">
+                        <i class="fas fa-download"></i> SVG
+                    </button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        let qrCodeInstance;
+        let currentColor = '#000000';
+        let logoImage = null;
+
+        // Color selection
+        document.querySelectorAll('.color-option').forEach(option => {
+            option.addEventListener('click', () => {
+                document.querySelectorAll('.color-option').forEach(opt => opt.classList.remove('active'));
+                option.classList.add('active');
+                currentColor = option.dataset.color;
+            });
+        });
+
+        // Logo preview
+        document.getElementById('logo-input').addEventListener('change', (e) => {
+            const file = e.target.files[0];
+            if (file) {
+                const reader = new FileReader();
+                reader.onload = (e) => {
+                    document.getElementById('logo-preview').src = e.target.result;
+                    document.getElementById('logo-preview').style.display = 'block';
+                    logoImage = e.target.result;
+                };
+                reader.readAsDataURL(file);
+            }
+        });
+
+        function generateQR() {
+            const url = document.getElementById('url-input').value.trim();
+            if (!url) {
+                alert('Por favor, ingresa una URL válida.');
+                return;
+            }
+
+            // Loading state
+            const btn = document.querySelector('.btn-primary');
+            const btnText = document.getElementById('btn-text');
+            const btnLoading = document.getElementById('btn-loading');
+            btnText.style.display = 'none';
+            btnLoading.style.display = 'inline-block';
+
+            const qrCodeDiv = document.getElementById('qr-code');
+            qrCodeDiv.innerHTML = '';
+            qrCodeDiv.style.display = 'block';
+
+            // Responsive QR size
+            const containerWidth = Math.min(
+                document.querySelector('.right-panel').offsetWidth - 48,
+                window.innerWidth < 1024 ? 280 : 320
+            );
+            
+            const qrConfig = {
+                text: url,
+                width: containerWidth,
+                height: containerWidth,
+                colorDark: currentColor,
+                colorLight: "#ffffff",
+                correctLevel: QRCode.CorrectLevel.H
+            };
+
+            qrCodeInstance = new QRCode(qrCodeDiv, qrConfig);
+
+            setTimeout(() => {
+                addLogoToQR();
+                document.querySelector('.download-buttons').style.display = 'flex';
+                
+                // Reset loading
+                btnText.style.display = 'inline';
+                btnLoading.style.display = 'none';
+            }, 800);
+        }
+
+        function addLogoToQR() {
+            if (!logoImage) return;
+            
+            const canvas = document.querySelector('#qr-code canvas');
+            if (!canvas) return;
+
+            const ctx = canvas.getContext('2d');
+            const image = new Image();
+            image.crossOrigin = "anonymous";
+            image.onload = () => {
+                const size = canvas.width * 0.22;
+                const x = (canvas.width - size) / 2;
+                const y = (canvas.height - size) / 2;
+
+                ctx.save();
+                ctx.beginPath();
+                ctx.arc(x + size/2, y + size/2, size/2, 0, Math.PI * 2);
+                ctx.clip();
+                ctx.drawImage(image, x, y, size, size);
+                
+                // White circle background for better contrast
+                ctx.restore();
+                ctx.fillStyle = 'rgba(255, 255, 255, 0.9)';
+                ctx.beginPath();
+                ctx.arc(x + size/2, y + size/2, size/2 + 2, 0, Math.PI * 2);
+                ctx.fill();
+                
+                ctx.save();
+                ctx.beginPath();
+                ctx.arc(x + size/2, y + size/2, size/2, 0, Math.PI * 2);
+                ctx.clip();
+                ctx.drawImage(image, x, y, size, size);
+                ctx.restore();
+            };
+            image.src = logoImage;
+        }
+
+        function downloadQR(format = 'png') {
+            const qrCanvas = document.querySelector('#qr-code canvas');
+            if (!qrCanvas) return;
+
+            const link = document.createElement('a');
+            link.download = `qr-code-${Date.now()}.${format}`;
+            link.href = qrCanvas.toDataURL('image/png', 1.0);
+            document.body.appendChild(link);
+            link.click();
+            document.body.removeChild(link);
+        }
+
+        // Initial load
+        window.addEventListener('load', () => {
+            setTimeout(generateQR, 1200);
+        });
+
+        // Regenerate on resize (debounced)
+        let resizeTimeout;
+        window.addEventListener('resize', () => {
+            clearTimeout(resizeTimeout);
+            resizeTimeout = setTimeout(() => {
+                if (qrCodeInstance && document.querySelector('#qr-code').style.display === 'block') {
+                    generateQR();
+                }
+            }, 300);
+        });
+    </script>
+</body>
+</html>
